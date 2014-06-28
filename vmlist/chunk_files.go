@@ -3,6 +3,7 @@ package vmlist
 import (
 	"fmt"
 	"io"
+	"path"
 
 	simplejson "github.com/bitly/go-simplejson"
 )
@@ -17,6 +18,10 @@ type BrowserSpec struct {
 type ChunkFile struct {
 	Md5url string
 	Url    string
+}
+
+func (f *ChunkFile) GetLocalFileName() string {
+	return path.Base(f.Url)
 }
 
 func GetFilesForBrowser(r io.Reader, spec *BrowserSpec) ([]ChunkFile, error) {
