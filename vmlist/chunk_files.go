@@ -2,6 +2,7 @@ package vmlist
 
 import (
 	"fmt"
+	"io"
 
 	simplejson "github.com/bitly/go-simplejson"
 )
@@ -18,7 +19,12 @@ type ChunkFile struct {
 	Url    string
 }
 
-func GetFilesForBrowser(osList *simplejson.Json, spec *BrowserSpec) ([]ChunkFile, error) {
+func GetFilesForBrowser(r io.Reader, spec *BrowserSpec) ([]ChunkFile, error) {
+	osList, err := simplejson.NewFromReader(r)
+	if err != nil {
+		return nil, err
+	}
+
 	softwareList, err := getSoftwareListForOsName(osList, spec.OsName)
 	if err != nil {
 		return nil, err
