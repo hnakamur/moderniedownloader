@@ -7,8 +7,12 @@ import (
 	"github.com/PuerkitoBio/goquery"
 )
 
-func DownloadVmOsList(url string) (string, error) {
-	doc, err := goquery.NewDocument(url)
+const (
+	DownloadPageUrl = "https://modern.ie/ja-jp/virtualization-tools#downloads"
+)
+
+func DownloadVmOsList() (string, error) {
+	doc, err := goquery.NewDocument(DownloadPageUrl)
 	if err != nil {
 		return "", err
 	}
@@ -25,5 +29,5 @@ func DownloadVmOsList(url string) (string, error) {
 		return list, nil
 	}
 
-	return "", fmt.Errorf("vmList not found in url=%s", url)
+	return "", fmt.Errorf("vmList not found in url=%s", DownloadPageUrl)
 }
