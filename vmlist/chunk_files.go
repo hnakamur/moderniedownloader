@@ -1,11 +1,10 @@
 package vmlist
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 	"path"
-
-	simplejson "github.com/bitly/go-simplejson"
 )
 
 type BrowserSpec struct {
@@ -15,8 +14,24 @@ type BrowserSpec struct {
 	OsVersion    string
 }
 
+type osData struct {
+	OsName       string
+	SoftwareList []softwareData
+}
+
+type softwareData struct {
+	SoftwareName string
+	Browsers     []browserData
+}
+
+type browserData struct {
+	Version   string
+	OsVersion string
+	Files     []ChunkFile
+}
+
 type ChunkFile struct {
-	Md5url string
+	Md5url string `json:"md5"`
 	Url    string
 }
 
@@ -25,129 +40,54 @@ func (f *ChunkFile) GetLocalFileName() string {
 }
 
 func GetFilesForBrowser(r io.Reader, spec *BrowserSpec) ([]ChunkFile, error) {
-	osList, err := simplejson.NewFromReader(r)
+	var osList []osData
+	decoder := json.NewDecoder(r)
+	err := decoder.Decode(&osList)
 	if err != nil {
 		return nil, err
 	}
 
-	softwareList, err := getSoftwareListForOsName(osList, spec.OsName)
-	if err != nil {
-		return nil, err
+	softwareList := getSoftwareListForOsName(osList, spec.OsName)
+	if softwareList == nil {
+		return nil, fmt.Errorf("softwareList not found for os: %s", spec.OsName)
 	}
 
-	browsers, err := getBrowsersForSoftwareName(softwareList, spec.SoftwareName)
-	if err != nil {
-		return nil, err
+	browsers := getBrowsersForSoftwareName(softwareList, spec.SoftwareName)
+	if browsers == nil {
+		return nil, fmt.Errorf("browsers not found for softwareName: %s", spec.SoftwareName)
 	}
 
-	return getFilesForVersionAndOsVersion(browsers, spec.Version, spec.OsVersion)
-}
-
-func getSoftwareListForOsName(js *simplejson.Json, osName string) (*simplejson.Json, error) {
-	return findArrayForKey(js, "softwareList", "osName", osName)
-}
-
-func getBrowsersForSoftwareName(js *simplejson.Json, softwareName string) (*simplejson.Json, error) {
-	return findArrayForKey(js, "browsers", "softwareName", softwareName)
-}
-
-func getFilesForVersionAndOsVersion(js *simplejson.Json, version, osVersion string) ([]ChunkFile, error) {
-	jsFiles, err := findArrayFor2Keys(js, "files", "version", version, "osVersion", osVersion)
-	if err != nil {
-		return nil, err
+	files := getFilesForVersionAndOsVersion(browsers, spec.Version, spec.OsVersion)
+	if files == nil {
+		return nil, fmt.Errorf("files not found for version: %s, osVersion: %s", spec.Version, spec.OsVersion)
 	}
 
-	elems, err := jsFiles.Array()
-	if err != nil {
-		return nil, err
-	}
-
-	files := make([]ChunkFile, len(elems))
-	for i, _ := range elems {
-		elem := jsFiles.GetIndex(i)
-		if err != nil {
-			return nil, err
-		}
-
-		md5url, err := elem.Get("md5").String()
-		if err != nil {
-			return nil, err
-		}
-
-		url, err := elem.Get("url").String()
-		if err != nil {
-			return nil, err
-		}
-
-		files[i] = ChunkFile{
-			Md5url: md5url,
-			Url:    url,
-		}
-	}
 	return files, nil
 }
 
-func findArrayForKey(js *simplejson.Json, arrayKey, keyName, keyValue string) (*simplejson.Json, error) {
-	elems, err := js.Array()
-	if err != nil {
-		return nil, err
-	}
-
-	for i, _ := range elems {
-		elem := js.GetIndex(i)
-		if err != nil {
-			return nil, err
-		}
-
-		value, err := elem.Get(keyName).String()
-		if err != nil {
-			return nil, err
-		}
-
-		if value == keyValue {
-			jsArray := elem.Get(arrayKey)
-			_, err := jsArray.Array()
-			if err != nil {
-				return nil, err
-			}
-
-			return jsArray, nil
+func getSoftwareListForOsName(osList []osData, osName string) []softwareData {
+	for _, os := range osList {
+		if os.OsName == osName {
+			return os.SoftwareList
 		}
 	}
-	return nil, fmt.Errorf("%s:\"%s\" not found", keyName, keyValue)
+	return nil
 }
 
-func findArrayFor2Keys(js *simplejson.Json, arrayKey, key1Name, key1Value, key2Name, key2Value string) (*simplejson.Json, error) {
-	elems, err := js.Array()
-	if err != nil {
-		return nil, err
-	}
-
-	for i, _ := range elems {
-		elem := js.GetIndex(i)
-		if err != nil {
-			return nil, err
-		}
-
-		value1, err := elem.Get(key1Name).String()
-		if err != nil {
-			return nil, err
-		}
-
-		value2, err := elem.Get(key2Name).String()
-		if err != nil {
-			return nil, err
-		}
-
-		if value1 == key1Value && value2 == key2Value {
-			jsArray := elem.Get(arrayKey)
-			_, err := jsArray.Array()
-			if err != nil {
-				return nil, err
-			}
-
-			return jsArray, nil
+func getBrowsersForSoftwareName(softwareList []softwareData, softwareName string) []browserData {
+	for _, software := range softwareList {
+		if software.SoftwareName == softwareName {
+			return software.Browsers
 		}
 	}
-	return nil, fmt.Errorf("%s:\"%s\", %s:\"%s\" not found", key1Name, key1Value, key2Name, key2Value)
+	return nil
+}
+
+func getFilesForVersionAndOsVersion(browsers []browserData, version, osVersion string) []ChunkFile {
+	for _, browser := range browsers {
+		if browser.Version == version && browser.OsVersion == osVersion {
+			return browser.Files
+		}
+	}
+	return nil
 }
