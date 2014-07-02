@@ -25,34 +25,7 @@ func main() {
 	}
 
 	if !vmExists {
-		ovaFileExists, err := download.DoesOVAFileExist(vmName)
-		if err != nil {
-			panic(err)
-		}
-
-		if !ovaFileExists {
-			list, err := scraping.DownloadVmOsList()
-			if err != nil {
-				panic(err)
-			}
-
-			spec, err := virtualbox.NewVMListBrowserSpecFromVMName(vmName)
-			if err != nil {
-				panic(err)
-			}
-
-			files, err := vmlist.GetFilesForBrowser(strings.NewReader(list), spec)
-			if err != nil {
-				panic(err)
-			}
-
-			err = download.DownloadAndBuildOVAFile(files)
-			if err != nil {
-				panic(err)
-			}
-		}
-
-		err = virtualbox.ImportAndConfigureVM(vmName)
+		err = setupVM(vmName)
 		if err != nil {
 			panic(err)
 		}
@@ -62,6 +35,41 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+}
+
+func setupVM(vmName string) error {
+	ovaFileExists, err := download.DoesOVAFileExist(vmName)
+	if err != nil {
+		return err
+	}
+
+	if !ovaFileExists {
+		err = downloadAndBuildOVAFile(vmName)
+		if err != nil {
+			return err
+		}
+	}
+
+	return virtualbox.ImportAndConfigureVM(vmName)
+}
+
+func downloadAndBuildOVAFile(vmName string) error {
+	list, err := scraping.DownloadVmOsList()
+	if err != nil {
+		return err
+	}
+
+	spec, err := virtualbox.NewVMListBrowserSpecFromVMName(vmName)
+	if err != nil {
+		return err
+	}
+
+	files, err := vmlist.GetFilesForBrowser(strings.NewReader(list), spec)
+	if err != nil {
+		return err
+	}
+
+	return download.DownloadAndBuildOVAFile(files)
 }
 
 func usage() {
