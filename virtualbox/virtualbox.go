@@ -37,6 +37,28 @@ var osVersionMappingFromVMNameToVMList = map[string]string{
 	"Win8.1": "win8.1",
 }
 
+var osVersionMappingFromVMListToVMName map[string]string
+
+func init() {
+	osVersionMappingFromVMListToVMName = make(map[string]string)
+	for k, v := range osVersionMappingFromVMNameToVMList {
+		osVersionMappingFromVMListToVMName[v] = k
+	}
+}
+
+func GetVmNameList() ([]string, error) {
+	browsers, err := vmlist.GetBrowsers("mac", "virtualbox")
+	if err != nil {
+		return nil, err
+	}
+
+	vmNames := make([]string, len(browsers))
+	for i, browser := range browsers {
+		vmNames[i] = fmt.Sprintf("IE%s - %s", browser.Version, osVersionMappingFromVMListToVMName[browser.OsVersion])
+	}
+	return vmNames, nil
+}
+
 func NewVMListBrowserSpecFromVMName(vmName string) (*vmlist.BrowserSpec, error) {
 	browserVersion := getBrowserVersionFromVMName(vmName)
 	if browserVersion == "" {
