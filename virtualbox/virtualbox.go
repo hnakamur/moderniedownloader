@@ -12,11 +12,11 @@ import (
 
 const (
 	BrowserOSSeparator = " - "
-	FirstSnapShotName  = "Snapshot 1"
-	ClipboardMode      = "bidirectional"
+	firstSnapShotName  = "Snapshot 1"
+	clipboardMode      = "bidirectional"
 )
 
-func DoesVMExist(vmName string) (bool, error) {
+func DoesVmExist(vmName string) (bool, error) {
 	cmd := exec.Command("VBoxManage", "showvminfo", vmName)
 	exitStatus, err := executil.Run(cmd)
 	if err != nil {
@@ -29,7 +29,7 @@ func DoesVMExist(vmName string) (bool, error) {
 	}
 }
 
-var osVersionMappingFromVMNameToVMList = map[string]string{
+var osVersionMappingFromVmNameToVmList = map[string]string{
 	"WinXP":  "XP",
 	"Vista":  "vista",
 	"Win7":   "win7",
@@ -37,12 +37,12 @@ var osVersionMappingFromVMNameToVMList = map[string]string{
 	"Win8.1": "win8.1",
 }
 
-var osVersionMappingFromVMListToVMName map[string]string
+var osVersionMappingFromVmListToVmName map[string]string
 
 func init() {
-	osVersionMappingFromVMListToVMName = make(map[string]string)
-	for k, v := range osVersionMappingFromVMNameToVMList {
-		osVersionMappingFromVMListToVMName[v] = k
+	osVersionMappingFromVmListToVmName = make(map[string]string)
+	for k, v := range osVersionMappingFromVmNameToVmList {
+		osVersionMappingFromVmListToVmName[v] = k
 	}
 }
 
@@ -54,19 +54,19 @@ func GetVmNameList() ([]string, error) {
 
 	vmNames := make([]string, len(browsers))
 	for i, browser := range browsers {
-		vmNames[i] = fmt.Sprintf("IE%s - %s", browser.Version, osVersionMappingFromVMListToVMName[browser.OsVersion])
+		vmNames[i] = fmt.Sprintf("IE%s - %s", browser.Version, osVersionMappingFromVmListToVmName[browser.OsVersion])
 	}
 	return vmNames, nil
 }
 
-func NewVMListBrowserSpecFromVMName(vmName string) (*vmlist.BrowserSpec, error) {
+func NewVmListBrowserSpecFromVmName(vmName string) (*vmlist.BrowserSpec, error) {
 	browserVersion := getBrowserVersionFromVMName(vmName)
 	if browserVersion == "" {
 		return nil, fmt.Errorf("Invalid browserVersion in vmName: %s", vmName)
 	}
 
 	osVersionInVMName := getOSVersionFromVMName(vmName)
-	osVersion := osVersionMappingFromVMNameToVMList[osVersionInVMName]
+	osVersion := osVersionMappingFromVmNameToVmList[osVersionInVMName]
 	if osVersion == "" {
 		return nil, fmt.Errorf("Unknown osVersion in vmName: %s", vmName)
 	}
@@ -79,7 +79,7 @@ func NewVMListBrowserSpecFromVMName(vmName string) (*vmlist.BrowserSpec, error) 
 	}, nil
 }
 
-func StartVM(vmName string) error {
+func StartVm(vmName string) error {
 	cmd := exec.Command("VBoxManage", "startvm", vmName, "--type", "gui")
 	exitStatus, err := executil.Run(cmd)
 	if err != nil {
@@ -92,13 +92,13 @@ func StartVM(vmName string) error {
 	}
 }
 
-func ImportAndConfigureVM(vmName string) error {
-	err := importVM(GetOVAFilenameForVMName(vmName))
+func ImportAndConfigureVm(vmName string) error {
+	err := importVm(GetOvaFileNameForVmName(vmName))
 	if err != nil {
 		return err
 	}
 
-	err = configVMMemory(vmName)
+	err = configVmMemory(vmName)
 	if err != nil {
 		return err
 	}
@@ -108,12 +108,12 @@ func ImportAndConfigureVM(vmName string) error {
 		return err
 	}
 
-	err = setClipboardMode(vmName, ClipboardMode)
+	err = setClipboardMode(vmName, clipboardMode)
 	if err != nil {
 		return err
 	}
 
-	err = takeSnapshot(vmName, FirstSnapShotName)
+	err = takeSnapshot(vmName, firstSnapShotName)
 	if err != nil {
 		return err
 	}
@@ -143,11 +143,11 @@ func getOSVersionFromVMName(vmName string) string {
 	return vmName[i+len(BrowserOSSeparator):]
 }
 
-func GetOVAFilenameForVMName(vmName string) string {
+func GetOvaFileNameForVmName(vmName string) string {
 	return vmName + ".ova"
 }
 
-func importVM(ovaFilename string) error {
+func importVm(ovaFilename string) error {
 	cmd := exec.Command("VBoxManage", "import", ovaFilename)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
@@ -162,7 +162,7 @@ func importVM(ovaFilename string) error {
 	}
 }
 
-func configVMMemory(vmName string) error {
+func configVmMemory(vmName string) error {
 	osVersion := getOSVersionFromVMName(vmName)
 	var cmd *exec.Cmd
 	if osVersion == "WinXP" || osVersion == "Vista" {

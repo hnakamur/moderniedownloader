@@ -9,29 +9,29 @@ import (
 	"github.com/hnakamur/moderniedownloader/vmlist"
 )
 
-var lflag bool
-var hflag bool
+var lFlag bool
+var hFlag bool
 
 func init() {
-	flag.BoolVar(&lflag, "l", false, "list available modern.IE VM names")
-	flag.BoolVar(&hflag, "h", false, "help")
+	flag.BoolVar(&lFlag, "l", false, "list available modern.IE VM names")
+	flag.BoolVar(&hFlag, "h", false, "help")
 }
 
 func main() {
 	flag.Parse()
 
-	if lflag {
+	if lFlag {
 		listAvailableVmNames()
 		return
 	}
-	if hflag || flag.NArg() == 0 {
+	if hFlag || flag.NArg() == 0 {
 		usage()
 		return
 	}
 
 	vmName := flag.Arg(0)
 
-	vmExists, err := virtualbox.DoesVMExist(vmName)
+	vmExists, err := virtualbox.DoesVmExist(vmName)
 	if err != nil {
 		panic(err)
 	}
@@ -43,30 +43,30 @@ func main() {
 		}
 	}
 
-	err = virtualbox.StartVM(vmName)
+	err = virtualbox.StartVm(vmName)
 	if err != nil {
 		panic(err)
 	}
 }
 
 func setupVM(vmName string) error {
-	ovaFileExists, err := download.DoesOVAFileExist(vmName)
+	ovaFileExists, err := download.DoesOvaFileExist(vmName)
 	if err != nil {
 		return err
 	}
 
 	if !ovaFileExists {
-		err = downloadAndBuildOVAFile(vmName)
+		err = downloadAndBuildOvaFile(vmName)
 		if err != nil {
 			return err
 		}
 	}
 
-	return virtualbox.ImportAndConfigureVM(vmName)
+	return virtualbox.ImportAndConfigureVm(vmName)
 }
 
-func downloadAndBuildOVAFile(vmName string) error {
-	spec, err := virtualbox.NewVMListBrowserSpecFromVMName(vmName)
+func downloadAndBuildOvaFile(vmName string) error {
+	spec, err := virtualbox.NewVmListBrowserSpecFromVmName(vmName)
 	if err != nil {
 		return err
 	}
@@ -76,7 +76,7 @@ func downloadAndBuildOVAFile(vmName string) error {
 		return err
 	}
 
-	return download.DownloadAndBuildOVAFile(files)
+	return download.DownloadAndBuildOvaFile(files)
 }
 
 func listAvailableVmNames() {

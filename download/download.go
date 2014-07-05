@@ -15,11 +15,11 @@ import (
 	"github.com/hnakamur/moderniedownloader/vmlist"
 )
 
-func DoesOVAFileExist(vmName string) (bool, error) {
-	return fileExists(virtualbox.GetOVAFilenameForVMName(vmName))
+func DoesOvaFileExist(vmName string) (bool, error) {
+	return fileExists(virtualbox.GetOvaFileNameForVmName(vmName))
 }
 
-func DownloadAndBuildOVAFile(files []vmlist.ChunkFile) error {
+func DownloadAndBuildOvaFile(files []vmlist.ChunkFile) error {
 	downloadFilesIfNeeded(files)
 
 	err := concatFiles(files)
