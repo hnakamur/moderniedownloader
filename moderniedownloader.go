@@ -9,22 +9,28 @@ import (
 	"github.com/hnakamur/moderniedownloader/vmlist"
 )
 
-var lFlag bool
-var hFlag bool
+var listRegisteredVmsFlag bool
+var listAvailableVmsFlag bool
+var helpFlag bool
 
 func init() {
-	flag.BoolVar(&lFlag, "l", false, "list available modern.IE VM names")
-	flag.BoolVar(&hFlag, "h", false, "help")
+	flag.BoolVar(&listRegisteredVmsFlag, "l", false, "list registered modern.IE VM names")
+	flag.BoolVar(&listAvailableVmsFlag, "L", false, "list available modern.IE VM names")
+	flag.BoolVar(&helpFlag, "h", false, "help")
 }
 
 func main() {
 	flag.Parse()
 
-	if lFlag {
+	if listRegisteredVmsFlag {
+		listRegisteredVmNames()
+		return
+	}
+	if listAvailableVmsFlag {
 		listAvailableVmNames()
 		return
 	}
-	if hFlag || flag.NArg() == 0 {
+	if helpFlag || flag.NArg() == 0 {
 		usage()
 		return
 	}
@@ -77,6 +83,16 @@ func downloadAndBuildOvaFile(vmName string) error {
 	}
 
 	return download.DownloadAndBuildOvaFile(files)
+}
+
+func listRegisteredVmNames() {
+	vmNames, err := virtualbox.GetRegisteredVmNameList()
+	if err != nil {
+		panic(err)
+	}
+	for _, vmName := range vmNames {
+		fmt.Printf("%s\n", vmName)
+	}
 }
 
 func listAvailableVmNames() {

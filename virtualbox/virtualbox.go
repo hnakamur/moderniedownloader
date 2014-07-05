@@ -1,9 +1,12 @@
 package virtualbox
 
 import (
+	"bufio"
+	"bytes"
 	"fmt"
 	"os"
 	"os/exec"
+	"regexp"
 	"strings"
 
 	"github.com/hnakamur/moderniedownloader/executil"
@@ -44,6 +47,37 @@ func init() {
 	for k, v := range osVersionMappingFromVmNameToVmList {
 		osVersionMappingFromVmListToVmName[v] = k
 	}
+}
+
+func GetRegisteredVmNameList() ([]string, error) {
+	cmd := exec.Command("VBoxManage", "list", "vms")
+	var out bytes.Buffer
+	cmd.Stdout = &out
+
+	exitStatus, err := executil.Run(cmd)
+	if err != nil {
+		return nil, err
+	}
+	if exitStatus.ExitCode != 0 {
+		return nil, fmt.Errorf("VBoxManage list vms failed with exitCode=%d", exitStatus.ExitCode)
+	}
+
+	var vmNames []string
+	re := regexp.MustCompile(`^"(IE[\d.]+ - Win[\d.]+)"`)
+	scanner := bufio.NewScanner(&out)
+	for scanner.Scan() {
+		line := scanner.Text()
+		values := re.FindAllStringSubmatch(line, 1)
+		if values != nil {
+			vmName := values[0][1]
+			vmNames = append(vmNames, vmName)
+		}
+	}
+	if err := scanner.Err(); err != nil {
+		return nil, fmt.Errorf("Error during reading output of VBoxManage list vms: %s", err)
+	}
+
+	return vmNames, nil
 }
 
 func GetVmNameList() ([]string, error) {
