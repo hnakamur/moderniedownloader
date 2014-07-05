@@ -53,6 +53,13 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+
+	if !vmExists {
+		err = virtualbox.SetClipboardMode(vmName, virtualbox.ClipboardModeBidirectional)
+		if err != nil {
+			panic(err)
+		}
+	}
 }
 
 func setupVM(vmName string) error {

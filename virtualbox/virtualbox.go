@@ -14,9 +14,9 @@ import (
 )
 
 const (
-	BrowserOSSeparator = " - "
-	firstSnapShotName  = "Snapshot 1"
-	clipboardMode      = "bidirectional"
+	BrowserOSSeparator         = " - "
+	firstSnapShotName          = "Snapshot 1"
+	ClipboardModeBidirectional = "bidirectional"
 )
 
 func DoesVmExist(vmName string) (bool, error) {
@@ -142,11 +142,6 @@ func ImportAndConfigureVm(vmName string) error {
 		return err
 	}
 
-	err = setClipboardMode(vmName, clipboardMode)
-	if err != nil {
-		return err
-	}
-
 	err = takeSnapshot(vmName, firstSnapShotName)
 	if err != nil {
 		return err
@@ -234,7 +229,7 @@ func attachGuestAdditionsMedia(vmName string) error {
 	}
 }
 
-func setClipboardMode(vmName, clipboardMode string) error {
+func SetClipboardMode(vmName, clipboardMode string) error {
 	cmd := exec.Command("VBoxManage", "controlvm", vmName, "clipboard", clipboardMode)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
