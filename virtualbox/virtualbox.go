@@ -34,10 +34,11 @@ func DoesVmExist(vmName string) (bool, error) {
 
 var osVersionMappingFromVmNameToVmList = map[string]string{
 	"WinXP":  "XP",
-	"Vista":  "vista",
-	"Win7":   "win7",
-	"Win8":   "win8",
-	"Win8.1": "win8.1",
+	"Vista":  "Vista",
+	"Win7":   "Win7",
+	"Win8":   "Win8",
+	"Win8.1": "Win8.1",
+	"Win10":  "Win10",
 }
 
 var osVersionMappingFromVmListToVmName map[string]string
@@ -81,7 +82,7 @@ func GetRegisteredVmNameList() ([]string, error) {
 }
 
 func GetVmNameList() ([]string, error) {
-	browsers, err := vmlist.GetBrowsers("mac", "virtualbox")
+	browsers, err := vmlist.GetBrowsers("Mac", "VirtualBox")
 	if err != nil {
 		return nil, err
 	}
@@ -106,8 +107,8 @@ func NewVmListBrowserSpecFromVmName(vmName string) (*vmlist.BrowserSpec, error) 
 	}
 
 	return &vmlist.BrowserSpec{
-		OsName:       "mac",
-		SoftwareName: "virtualbox",
+		OsName:       "Mac",
+		SoftwareName: "VirtualBox",
 		Version:      browserVersion,
 		OsVersion:    osVersion,
 	}, nil
