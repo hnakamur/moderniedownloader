@@ -1,16 +1,15 @@
 package download
 
 import (
+	"archive/zip"
 	"crypto/md5"
 	"fmt"
 	"io"
 	"io/ioutil"
 	"net/http"
 	"os"
-	"os/exec"
-	"sync"
+	"path"
 
-	"github.com/hnakamur/moderniedownloader/executil"
 	"github.com/hnakamur/moderniedownloader/virtualbox"
 	"github.com/hnakamur/moderniedownloader/vmlist"
 )
@@ -19,15 +18,17 @@ func DoesOvaFileExist(vmName string) (bool, error) {
 	return fileExists(virtualbox.GetOvaFileNameForVmName(vmName))
 }
 
-func DownloadAndBuildOvaFile(files []vmlist.ChunkFile) error {
-	downloadFilesIfNeeded(files)
-
-	err := concatFiles(files)
-	if err != nil {
+func DownloadAndBuildOvaFile(file vmlist.ChunkFile) error {
+	if err := downloadFileIfNeeded(file); err != nil {
 		return err
 	}
 
-	return removeFiles(files)
+	filename := file.GetLocalFileName()
+	if err := unzipFile(filename); err != nil {
+		return err
+	}
+
+	return os.Remove(filename)
 }
 
 func fileExists(path string) (bool, error) {
@@ -42,16 +43,8 @@ func fileExists(path string) (bool, error) {
 	return true, nil
 }
 
-func downloadFilesIfNeeded(files []vmlist.ChunkFile) {
-	var wg sync.WaitGroup
-	wg.Add(len(files))
-	for i, file := range files {
-		go func(fileId int, f vmlist.ChunkFile) {
-			downloadMd5AndFileIfMd5NotMatch(f.Md5url, f.Url, f.GetLocalFileName())
-			wg.Done()
-		}(i, file)
-	}
-	wg.Wait()
+func downloadFileIfNeeded(f vmlist.ChunkFile) error {
+	return downloadMd5AndFileIfMd5NotMatch(f.Md5url, f.Url, f.GetLocalFileName())
 }
 
 func downloadMd5AndFileIfMd5NotMatch(md5url, url, path string) error {
@@ -143,39 +136,31 @@ func calcMd5(rd io.Reader) (string, error) {
 	return fmt.Sprintf("%x", h.Sum(nil)), nil
 }
 
-func concatFiles(files []vmlist.ChunkFile) error {
-	executableFileName := files[0].GetLocalFileName()
-	fmt.Printf("chmod +x %s", executableFileName)
-	cmd := exec.Command("chmod", "+x", executableFileName)
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	exitStatus, err := executil.Run(cmd)
+func unzipFile(filename string) error {
+	r, err := zip.OpenReader(filename)
 	if err != nil {
 		return err
 	}
-	if exitStatus.ExitCode != 0 {
-		return fmt.Errorf("chmod +x %s failed with exitCode=%d", executableFileName, exitStatus.ExitCode)
-	}
+	defer r.Close()
 
-	fmt.Printf("Running ./%s", executableFileName)
-	cmd = exec.Command("./" + executableFileName)
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	exitStatus, err = executil.Run(cmd)
-	if err != nil {
-		return err
-	}
-	if exitStatus.ExitCode != 0 {
-		return fmt.Errorf("./% failed with exitCode=%d", executableFileName, exitStatus.ExitCode)
-	}
+	for _, f := range r.File {
+		if f.Mode()&os.ModeDir != 0 {
+			continue
+		}
 
-	return nil
-}
-
-func removeFiles(files []vmlist.ChunkFile) error {
-	for _, file := range files {
-		err := os.Remove(file.GetLocalFileName())
+		rc, err := f.Open()
 		if err != nil {
+			return err
+		}
+		defer rc.Close()
+
+		out, err := os.Create(path.Base(f.Name))
+		if err != nil {
+			return nil
+		}
+		defer out.Close()
+
+		if _, err = io.Copy(out, rc); err != nil {
 			return err
 		}
 	}

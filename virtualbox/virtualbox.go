@@ -197,7 +197,7 @@ func configVmMemory(vmName string) error {
 	var cmd *exec.Cmd
 	if osVersion == "WinXP" || osVersion == "Vista" {
 		cmd = exec.Command("VBoxManage", "modifyvm", vmName, "--memory", "1024")
-	} else if osVersion == "Win7" || osVersion == "Win8" || osVersion == "Win8.1" {
+	} else if osVersion == "Win7" || osVersion == "Win8" || osVersion == "Win8.1" || osVersion == "Win10" {
 		cmd = exec.Command("VBoxManage", "modifyvm", vmName, "--memory", "2048", "--vram", "128")
 	} else {
 		return fmt.Errorf("Unsupported os version: %s", osVersion)

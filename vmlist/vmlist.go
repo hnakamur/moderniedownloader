@@ -41,18 +41,18 @@ func (f *ChunkFile) GetLocalFileName() string {
 	return path.Base(f.Url)
 }
 
-func GetFilesForBrowser(spec *BrowserSpec) ([]ChunkFile, error) {
+func GetFileInfoForBrowser(spec *BrowserSpec) (ChunkFile, error) {
 	browsers, err := GetBrowsers(spec.OsName, spec.SoftwareName)
 	if err != nil {
-		return nil, err
+		return ChunkFile{}, err
 	}
 
-	files := getFilesForVersionAndOsVersion(browsers, spec.Version, spec.OsVersion)
-	if files == nil {
-		return nil, fmt.Errorf("files not found for version: %s, osVersion: %s", spec.Version, spec.OsVersion)
+	f := getFileInfoForVersionAndOsVersion(browsers, spec.Version, spec.OsVersion)
+	if f == nil {
+		return ChunkFile{}, fmt.Errorf("zip file info not found for version: %s, osVersion: %s", spec.Version, spec.OsVersion)
 	}
 
-	return files, nil
+	return *f, nil
 }
 
 func GetBrowsers(osName, softwareName string) ([]BrowserData, error) {
@@ -108,10 +108,14 @@ func getBrowsersForSoftwareName(softwareList []softwareData, softwareName string
 	return nil
 }
 
-func getFilesForVersionAndOsVersion(browsers []BrowserData, version, osVersion string) []ChunkFile {
+func getFileInfoForVersionAndOsVersion(browsers []BrowserData, version, osVersion string) *ChunkFile {
 	for _, browser := range browsers {
 		if browser.Version == version && browser.OsVersion == osVersion {
-			return browser.Files
+			for _, file := range browser.Files {
+				if path.Ext(file.Url) == ".zip" {
+					return &file
+				}
+			}
 		}
 	}
 	return nil

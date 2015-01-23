@@ -84,12 +84,12 @@ func downloadAndBuildOvaFile(vmName string) error {
 		return err
 	}
 
-	files, err := vmlist.GetFilesForBrowser(spec)
+	f, err := vmlist.GetFileInfoForBrowser(spec)
 	if err != nil {
 		return err
 	}
 
-	return download.DownloadAndBuildOvaFile(files)
+	return download.DownloadAndBuildOvaFile(f)
 }
 
 func listRegisteredVmNames() {
@@ -115,6 +115,7 @@ func listAvailableVmNames() {
 func usage() {
 	fmt.Printf("Usage: moderniedownlaoder vmName\n")
 	fmt.Printf("           example: moderniedownloader \"IE11 - Win8.1\"\n")
-	fmt.Printf("       moderniedownlaoder -l     list available vm names\n")
+	fmt.Printf("       moderniedownlaoder -l     list registered vm names\n")
+	fmt.Printf("       moderniedownlaoder -L     list available vm names\n")
 	fmt.Printf("       moderniedownlaoder -h     print this help\n")
 }
