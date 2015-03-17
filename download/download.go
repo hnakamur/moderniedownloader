@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"path"
+	"strings"
 
 	"github.com/hnakamur/moderniedownloader/virtualbox"
 	"github.com/hnakamur/moderniedownloader/vmlist"
@@ -75,7 +76,7 @@ func downloadFileIfMd5NotMatch(md5, url, path string) error {
 	if err != nil {
 		return err
 	}
-	if localMd5 == md5 {
+	if strings.EqualFold(localMd5, md5) {
 		return nil
 	}
 
@@ -84,7 +85,7 @@ func downloadFileIfMd5NotMatch(md5, url, path string) error {
 	if err != nil {
 		return err
 	}
-	if localMd5 != md5 {
+	if !strings.EqualFold(localMd5, md5) {
 		return fmt.Errorf("Md5 unmatched. remote=%s, local=%s",
 			md5, localMd5)
 	}
